@@ -25,7 +25,7 @@ bool isPaused = false;
 bool leftmousePressed = false;
 bool rightmousePressed = false;
 
-float colorChangeInterval = 0.01f; 
+float colorChangeInterval = 0.01f;
 float saturationLevel = 2.0f; //initial value
 float speed = 7.0f; //initial value
 
@@ -285,7 +285,7 @@ void updateColor() {
         lastColorUpdateTime = now;
 
         glm::vec4 hsv = rgbToHsv(currentColor);
-        hsv.r += colorChangeInterval / speed; 
+        hsv.r += colorChangeInterval / speed;
         if (hsv.r > 1.0f) {
             hsv.r -= 1.0f;
         }
@@ -340,16 +340,16 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         initializeGrid();
     }
 
-    else if (key == GLFW_KEY_P && action == GLFW_RELEASE) { 
-        isPaused = !isPaused; 
+    else if (key == GLFW_KEY_P && action == GLFW_RELEASE) { // Use 'P' key to toggle pause
+        isPaused = !isPaused; // Toggle pause state
     }
 }
 
 int main() {
     glfwInit();
- 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);                     
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);                     
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);                     //version of the 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);                     //opengl library
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* window = glfwCreateWindow(h, w, "falling sand", nullptr, nullptr);
@@ -357,10 +357,10 @@ int main() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;     
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-    ImGui::StyleColorsDark();   
+    ImGui::StyleColorsDark();
 
     glfwMakeContextCurrent(window);
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -373,16 +373,18 @@ int main() {
 
     glfwSetCursorPosCallback(window, cursorPositionCallback);
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
-    glfwSetKeyCallback(window, key_callback); 
+    glfwSetKeyCallback(window, key_callback);
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
+
+    ImVec4 background_color = ImVec4(0.45f, 0.55f, 0.6f, 1.0f);
 
 
     glfwSwapInterval(1);
 
     while (!glfwWindowShouldClose(window)) {
-        
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -391,7 +393,7 @@ int main() {
 
         if (isMouseHandling) {
             leftmousePressed = false, rightmousePressed = false;
-            
+
         }
         if (leftmousePressed || rightmousePressed) {
             updateColor();
@@ -401,22 +403,23 @@ int main() {
         renderGrid(shaderProgram, projectionLoc, colorLoc);
 
         glfwPollEvents();
-        
-        ImVec2 initialWindowSize(200, 200); 
+
+        ImVec2 initialWindowSize(640, 320);
         /*ImVec2 windowPos(100, 100);
         ImGui::SetWindowPos(windowPos);*/
         ImGui::SetNextWindowSize(initialWindowSize, ImGuiCond_FirstUseEver);
-            
+
         ImGui::Begin("Properties");;
         ImGui::Text("any value except sand size can be changed (since its set during compile time)");
-        ImGui::Text("Press P to pause, R to reset screen");
         ImGui::SliderFloat("intensity", &saturationLevel, 0.0f, 10.0f);
         ImGui::SliderFloat("color cycle speed", &speed, 0.1f, 12.0f);
+        ImGui::ColorEdit3("background", (float*)&background_color);
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
         ImGui::End();
-        
+
 
         ImGui::Render();
-        glClearColor(0.45f, 0.01f, 0.32f, 1.0f);
+        glClearColor(background_color.x * background_color.w, background_color.y * background_color.w, background_color.z * background_color.w, background_color.w);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
     }
