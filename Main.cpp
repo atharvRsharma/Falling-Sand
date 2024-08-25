@@ -252,7 +252,7 @@ glm::vec4 rgbToHsv(const glm::vec4& color) {
         h *= 60;
         if (h < 0) h += 360;
     }
-    return glm::vec4(h / 360.0f, s, v, color.a); // Normalized H value [0, 1]
+    return glm::vec4(h / 360.0f, s, v, color.a); 
 }
 
 glm::vec4 hsvToRgb(const glm::vec4& color) {
@@ -353,16 +353,16 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         initializeGrid();
     }
 
-    else if (key == GLFW_KEY_P && action == GLFW_RELEASE) { // Use 'P' key to toggle pause
-        isPaused = !isPaused; // Toggle pause state
+    else if (key == GLFW_KEY_P && action == GLFW_RELEASE) { 
+        isPaused = !isPaused; 
     }
 }
 
 int main() {
     glfwInit();
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);                     //version of the 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);                     //opengl library
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);                    
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);                     
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* window = glfwCreateWindow(h, w, "falling sand", nullptr, nullptr);
@@ -370,8 +370,8 @@ int main() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;    
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      
 
     ImGui::StyleColorsDark();
 
