@@ -26,7 +26,7 @@ update 3: added a pause functionality, can pause sand particles mid air with the
 
 FINAL UPDATE 4: added GUI using ImGui to change color intensity and time interval between changing colors. All deprecated files such as freeglut have been removed. May get small updates overtime and a few tweaks here and there but the project is now finished [25-08-2024]
 
-============================================================================================
+===========================================================================
 
 initial renditions[for archival and documentation purposes]
 
