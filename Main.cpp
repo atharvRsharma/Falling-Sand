@@ -145,15 +145,15 @@ void updateSimulation() {
         for (int y = 0; y < GRID_HEIGHT; ++y) {
             for (int x = 0; x < GRID_WIDTH; ++x) {
                 if (grid[y][x].type == SAND) {
-                    if (y - 1 < GRID_HEIGHT && grid[y - 1][x].type == EMPTY) {
+                    if (y - 1 >= 0 && grid[y - 1][x].type == EMPTY) {
                         grid[y - 1][x] = { SAND, grid[y][x].color };
                         grid[y][x] = { EMPTY, glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) };
                     }
-                    else if (x > 0 && y - 1 < GRID_HEIGHT && grid[y - 1][x - 1].type == EMPTY) {
+                    else if (x > 0 && y - 1 >= 0 && grid[y - 1][x - 1].type == EMPTY) {
                         grid[y - 1][x - 1] = { SAND, grid[y][x].color };
                         grid[y][x] = { EMPTY, glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) };
                     }
-                    else if (x < GRID_WIDTH - 1 && y - 1 < GRID_HEIGHT && grid[y - 1][x + 1].type == EMPTY) {
+                    else if (x < GRID_WIDTH - 1 && y - 1 >= 0 && grid[y - 1][x + 1].type == EMPTY) {
                         grid[y - 1][x + 1] = { SAND, grid[y][x].color };
                         grid[y][x] = { EMPTY, glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) };
                     }
@@ -161,10 +161,28 @@ void updateSimulation() {
             }
         }
     }
-
-    return;
 }
 
+
+
+unsigned int VAO = 0, VBO = 0;
+
+void initializeRenderingResources() {
+    if (VAO == 0 && VBO == 0) {
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+
+        glBindVertexArray(VAO);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, nullptr, GL_DYNAMIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        glBindVertexArray(0);
+    }
+}
 
 void renderGrid(unsigned int shaderProgram, unsigned int projectionLoc, unsigned int colorLoc) {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -179,39 +197,34 @@ void renderGrid(unsigned int shaderProgram, unsigned int projectionLoc, unsigned
 
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
 
+    glBindVertexArray(VAO);
+
+   
     for (int y = 0; y < GRID_HEIGHT; ++y) {
         for (int x = 0; x < GRID_WIDTH; ++x) {
             if (grid[y][x].type == SAND) {
                 glm::vec4 color = grid[y][x].color;
+
+                
                 float vertices[] = {
                     x * CELL_SIZE,         y * CELL_SIZE,
                     (x + 1) * CELL_SIZE,   y * CELL_SIZE,
-                    (x + 1) * CELL_SIZE,  (y + 1) * CELL_SIZE,
-                    x * CELL_SIZE,        (y + 1) * CELL_SIZE
+                    (x + 1) * CELL_SIZE,   (y + 1) * CELL_SIZE,
+                    x * CELL_SIZE,         (y + 1) * CELL_SIZE
                 };
 
-                unsigned int VAO, VBO;
-                glGenVertexArrays(1, &VAO);
-                glGenBuffers(1, &VBO);
-
-                glBindVertexArray(VAO);
-
+                
                 glBindBuffer(GL_ARRAY_BUFFER, VBO);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-                glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-                glEnableVertexAttribArray(0);
-
+                glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+              
                 glUniform4f(colorLoc, color.r, color.g, color.b, color.a);
-
+          
                 glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-                glDeleteVertexArrays(1, &VAO);
-                glDeleteBuffers(1, &VBO);
             }
         }
     }
 
+    glBindVertexArray(0);
     glUseProgram(0);
 }
 
@@ -370,6 +383,7 @@ int main() {
     unsigned int colorLoc = glGetUniformLocation(shaderProgram, "color");
 
     initializeGrid();
+    initializeRenderingResources();
 
     glfwSetCursorPosCallback(window, cursorPositionCallback);
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
@@ -400,6 +414,7 @@ int main() {
         }
         updateSimulation();
         glClear(GL_COLOR_BUFFER_BIT);
+        
         renderGrid(shaderProgram, projectionLoc, colorLoc);
 
         glfwPollEvents();
