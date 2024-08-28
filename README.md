@@ -1,3 +1,5 @@
+# Falling Sand
+
 A falling sand simulation inspired by Daniel Shiffman's falling sand simulation written in C++ using GLFW and glad functionalities.
 Capable of checking for mouse click and drag, press R to reset screen. 
 This happens to be my first project in generative programming, it also happens to be terribly optimised and consists of a lot of deprecated files such as the glut and glew dlls.
