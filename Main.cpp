@@ -13,13 +13,15 @@
 #include <random>
 #include <chrono>
 
-//works well with square windows with relatively small sizes, helps to spawn multiple particles without performance drops
+
 const int h = 800;
 const int w = 800;
 
 const int CELL_SIZE = 15;
 const int GRID_WIDTH = w / CELL_SIZE;
 const int GRID_HEIGHT = h / CELL_SIZE;
+
+float sand = CELL_SIZE;
 
 bool isPaused = false;
 bool leftmousePressed = false;
@@ -28,6 +30,8 @@ bool rightmousePressed = false;
 float colorChangeInterval = 0.01f;
 float saturationLevel = 2.0f; //initial value
 float speed = 7.0f; //initial value
+
+float r, g, b;
 
 double mouseX, mouseY;
 
@@ -119,36 +123,25 @@ void randomPlaceSand(int mouseX, int mouseY) {
     }
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(1, 5);
+    std::uniform_int_distribution<> dis(0, 2);
     int direction = dis(gen);
 
-    if (direction == 1) {
+    if (direction == 0) {
         if (gridY - 1 >= 0) {
-            grid[gridY + 3][gridX] = { SAND, currentColor };
+            grid[gridY + 2][gridX] = { SAND, currentColor };
+        }
+    }
+    else if (direction == 1) {
+        if (gridX - 1 >= 0 && gridY - 1 >= 0) {
+            grid[gridY + 1][gridX - 1] = { SAND, currentColor };
         }
     }
     else if (direction == 2) {
-        if (gridX - 1 >= 0 && gridY - 1 >= 0) {
-            grid[gridY + 1][gridX - 2] = { SAND, currentColor };
-        }
-    }
-    else if (direction == 3) {
         if (gridX + 1 < GRID_WIDTH && gridY - 1 >= 0) {
-            grid[gridY + 1][gridX + 2] = { SAND, currentColor };
-        }
-    }
-    else if (direction == 4) {
-        if (gridX + 1 < GRID_WIDTH && gridY - 1 >= 0) {
-            grid[gridY - 2][gridX - 1] = { SAND, currentColor };
-        }
-    }
-    else if (direction == 5) {
-        if (gridX + 1 < GRID_WIDTH && gridY - 1 >= 0) {
-            grid[gridY - 2][gridX + 1] = { SAND, currentColor };
+            grid[gridY + 1][gridX + 1] = { SAND, currentColor };
         }
     }
 }
-
 void updateSimulation() {
     if (!isPaused) {
         for (int y = 0; y < GRID_HEIGHT; ++y) {
@@ -172,8 +165,6 @@ void updateSimulation() {
     }
 }
 
-
-
 unsigned int VAO = 0, VBO = 0;
 
 void initializeRenderingResources() {
@@ -184,7 +175,7 @@ void initializeRenderingResources() {
         glBindVertexArray(VAO);
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, nullptr, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, nullptr, GL_STATIC_DRAW);
 
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
@@ -194,8 +185,6 @@ void initializeRenderingResources() {
 }
 
 void renderGrid(unsigned int shaderProgram, unsigned int projectionLoc, unsigned int colorLoc) {
-    glClear(GL_COLOR_BUFFER_BIT);
-
     glUseProgram(shaderProgram);
 
     float left = 0.0f;
@@ -208,26 +197,25 @@ void renderGrid(unsigned int shaderProgram, unsigned int projectionLoc, unsigned
 
     glBindVertexArray(VAO);
 
-   
     for (int y = 0; y < GRID_HEIGHT; ++y) {
         for (int x = 0; x < GRID_WIDTH; ++x) {
             if (grid[y][x].type == SAND) {
                 glm::vec4 color = grid[y][x].color;
 
-                
+
                 float vertices[] = {
-                    x * CELL_SIZE,         y * CELL_SIZE,
-                    (x + 1) * CELL_SIZE,   y * CELL_SIZE,
-                    (x + 1) * CELL_SIZE,   (y + 1) * CELL_SIZE,
-                    x * CELL_SIZE,         (y + 1) * CELL_SIZE
+                    x * sand,         y * sand,
+                    (x + 1) * sand,   y * sand,
+                    (x + 1) * sand,   (y + 1) * sand,
+                    x * sand,         (y + 1) * sand
                 };
 
-                
+
                 glBindBuffer(GL_ARRAY_BUFFER, VBO);
                 glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-              
+
                 glUniform4f(colorLoc, color.r, color.g, color.b, color.a);
-          
+
                 glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
             }
         }
@@ -238,9 +226,9 @@ void renderGrid(unsigned int shaderProgram, unsigned int projectionLoc, unsigned
 }
 
 glm::vec4 rgbToHsv(const glm::vec4& color) {
-    float r = color.r;
-    float g = color.g;
-    float b = color.b;
+    r = color.r;
+    g = color.g;
+    b = color.b;
     float cmax = std::max({ r, g, b });
     float cmin = std::min({ r, g, b });
     float diff = cmax - cmin;
@@ -297,7 +285,6 @@ glm::vec4 hsvToRgb(const glm::vec4& color) {
 }
 
 
-
 void updateColor() {
     using namespace std::chrono;
     auto now = high_resolution_clock::now();
@@ -326,13 +313,13 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
     if (action == GLFW_PRESS) {
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
             leftmousePressed = true;
-            placeSand(static_cast<int>(mouseX), static_cast<int>(mouseY + 2));
+            placeSand(static_cast<int>(mouseX), static_cast<int>(mouseY));
             updateColor();
         }
 
         else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
             rightmousePressed = true;
-            randomPlaceSand(static_cast<int>(mouseX), static_cast<int>(mouseY + 2));
+            randomPlaceSand(static_cast<int>(mouseX), static_cast<int>(mouseY));
             updateColor();
         }
     }
@@ -350,10 +337,10 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 
 void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {
     if (leftmousePressed) {
-        placeSand(static_cast<int>(xpos), static_cast<int>(ypos + 2));
+        placeSand(static_cast<int>(xpos), static_cast<int>(ypos));
     }
     else if (rightmousePressed) {
-        randomPlaceSand(static_cast<int>(xpos), static_cast<int>(ypos + 2));
+        randomPlaceSand(static_cast<int>(xpos), static_cast<int>(ypos));
     }
 }
 
@@ -374,7 +361,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);                     //opengl library
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(h, w, "falling sand", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(w, h, "falling sand", nullptr, nullptr);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -413,37 +400,34 @@ int main() {
         ImGui::NewFrame();
         ImGuiIO& io = ImGui::GetIO();
         bool isMouseHandling = io.WantCaptureMouse;
-
-        if (isMouseHandling) {
-            leftmousePressed = false, rightmousePressed = false;
-        }
-        
-        if (leftmousePressed || rightmousePressed) {
-            updateColor();
-        }
-        
-        updateSimulation();
-        glClear(GL_COLOR_BUFFER_BIT);
-        
-        renderGrid(shaderProgram, projectionLoc, colorLoc);
-
-        glfwPollEvents();
-
-        ImVec2 initialWindowSize(640, 320);
-        /*ImVec2 windowPos(100, 100);
-        ImGui::SetWindowPos(windowPos);*/
-        ImGui::SetNextWindowSize(initialWindowSize, ImGuiCond_FirstUseEver);
-
         ImGui::Begin("Properties");;
         ImGui::Text("any value except sand size can be changed (since its set during compile time)");
         ImGui::SliderFloat("lightness(lower is brighter)", &saturationLevel, 0.01f, 10.0f);
         ImGui::SliderFloat("color cycle speed", &speed, 0.1f, 12.0f);
         ImGui::SliderFloat("color change time", &colorChangeInterval, 0.01f, 10.0f);
         ImGui::ColorEdit3("background", (float*)&background_color);
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 100.0f / io.Framerate, io.Framerate);
         ImGui::End();
+        
+        if (leftmousePressed || rightmousePressed) {
+            updateColor();
+        }
+        updateSimulation();
+        glClear(GL_COLOR_BUFFER_BIT);
 
+        renderGrid(shaderProgram, projectionLoc, colorLoc);
 
+        glfwPollEvents();
+
+        ImVec2 initialWindowSize(640, 350);
+        /*ImVec2 windowPos(100, 100);
+        ImGui::SetWindowPos(windowPos);*/
+        ImGui::SetNextWindowSize(initialWindowSize, ImGuiCond_FirstUseEver);
+        if (isMouseHandling) {
+            leftmousePressed = false, rightmousePressed = false;
+
+        }
+        
         ImGui::Render();
         glClearColor(background_color.x * background_color.w, background_color.y * background_color.w, background_color.z * background_color.w, background_color.w);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
