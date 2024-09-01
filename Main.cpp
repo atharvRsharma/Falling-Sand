@@ -407,11 +407,12 @@ int main() {
 
         if (isMouseHandling) {
             leftmousePressed = false, rightmousePressed = false;
-
         }
+        
         if (leftmousePressed || rightmousePressed) {
             updateColor();
         }
+        
         updateSimulation();
         glClear(GL_COLOR_BUFFER_BIT);
         
@@ -426,8 +427,9 @@ int main() {
 
         ImGui::Begin("Properties");;
         ImGui::Text("any value except sand size can be changed (since its set during compile time)");
-        ImGui::SliderFloat("color variation", &saturationLevel, 0.0f, 10.0f);
+        ImGui::SliderFloat("lightness(lower is brighter)", &saturationLevel, 0.01f, 10.0f);
         ImGui::SliderFloat("color cycle speed", &speed, 0.1f, 12.0f);
+        ImGui::SliderFloat("color change time", &colorChangeInterval, 0.01f, 10.0f);
         ImGui::ColorEdit3("background", (float*)&background_color);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
         ImGui::End();
