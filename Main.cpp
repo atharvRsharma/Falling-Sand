@@ -142,6 +142,7 @@ void randomPlaceSand(int mouseX, int mouseY) {
         }
     }
 }
+
 void updateSimulation() {
     if (!isPaused) {
         for (int y = 0; y < GRID_HEIGHT; ++y) {
