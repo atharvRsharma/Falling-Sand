@@ -13,7 +13,7 @@
 #include <random>
 #include <chrono>
 
-
+//works well with square windows with relatively small sizes, helps to spawn multiple particles without performance drops
 const int h = 800;
 const int w = 800;
 
