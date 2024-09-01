@@ -119,25 +119,34 @@ void randomPlaceSand(int mouseX, int mouseY) {
     }
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, 2);
+    std::uniform_int_distribution<> dis(1, 5);
     int direction = dis(gen);
 
-    if (direction == 0) {
+    if (direction == 1) {
         if (gridY - 1 >= 0) {
-            grid[gridY + 2][gridX] = { SAND, currentColor };
-        }
-    }
-    else if (direction == 1) {
-        if (gridX - 1 >= 0 && gridY - 1 >= 0) {
-            grid[gridY + 1][gridX - 1] = { SAND, currentColor };
+            grid[gridY + 3][gridX] = { SAND, currentColor };
         }
     }
     else if (direction == 2) {
-        if (gridX + 1 < GRID_WIDTH && gridY - 1 >= 0) {
-            grid[gridY + 1][gridX + 1] = { SAND, currentColor };
+        if (gridX - 1 >= 0 && gridY - 1 >= 0) {
+            grid[gridY + 1][gridX - 2] = { SAND, currentColor };
         }
     }
-
+    else if (direction == 3) {
+        if (gridX + 1 < GRID_WIDTH && gridY - 1 >= 0) {
+            grid[gridY + 1][gridX + 2] = { SAND, currentColor };
+        }
+    }
+    else if (direction == 4) {
+        if (gridX + 1 < GRID_WIDTH && gridY - 1 >= 0) {
+            grid[gridY - 2][gridX - 1] = { SAND, currentColor };
+        }
+    }
+    else if (direction == 5) {
+        if (gridX + 1 < GRID_WIDTH && gridY - 1 >= 0) {
+            grid[gridY - 2][gridX + 1] = { SAND, currentColor };
+        }
+    }
 }
 
 void updateSimulation() {
