@@ -100,7 +100,7 @@ void initializeGrid() {
     }
 }
 
-//add ( && grid[gridY - 1][gridX].type == EMPTY to all if statements to stop drawing on pre-existing sand)
+//add ( && grid[gridY - 1][gridX].type == EMPTY to all if statements to stop drawing on preexisting sand)
 
 void placeSand(int mouseX, int mouseY) {
     int gridX = mouseX / CELL_SIZE;
@@ -250,7 +250,7 @@ glm::vec4 rgbToHsv(const glm::vec4& color) {
         h *= 60;
         if (h < 0) h += 360;
     }
-    return glm::vec4(h / 360.0f, s, v, color.a); // Normalized H value [0, 1]
+    return glm::vec4(h / 360.0f, s, v, color.a); // normalised h value range 0-1 inclusive
 }
 
 glm::vec4 hsvToRgb(const glm::vec4& color) {
@@ -358,8 +358,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 int main() {
     glfwInit();
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);                     //version of the 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);                     //opengl library
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);                     
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);                     
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* window = glfwCreateWindow(w, h, "falling sand", nullptr, nullptr);
@@ -367,8 +367,8 @@ int main() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      
 
     ImGui::StyleColorsDark();
 
