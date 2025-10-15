@@ -17,7 +17,7 @@
 const int h = 800;
 const int w = 800;
 
-const int CELL_SIZE = 15;
+const int CELL_SIZE = 5;
 const int GRID_WIDTH = w / CELL_SIZE;
 const int GRID_HEIGHT = h / CELL_SIZE;
 
@@ -28,8 +28,8 @@ bool leftmousePressed = false;
 bool rightmousePressed = false;
 
 float colorChangeInterval = 0.01f;
-float saturationLevel = 2.0f; //initial value
-float speed = 7.0f; //initial value
+float saturationLevel = 2.0f; 
+float speed = 7.0f; 
 
 float r, g, b;
 
@@ -54,20 +54,30 @@ std::chrono::high_resolution_clock::time_point lastColorUpdateTime;
 
 const char* vertexShaderSource = R"glsl(
     #version 330 core
-    layout(location = 0) in vec2 aPos;
-    uniform mat4 projection;
-    void main() {
-        gl_Position = projection * vec4(aPos, 0.0, 1.0);
-    }
+layout(location = 0) in vec2 aPos; 
+layout(location = 1) in vec2 instancePosition; 
+layout(location = 2) in vec4 instanceColor;    
+
+uniform mat4 projection;
+
+out vec4 vColor; 
+
+void main() {
+    
+    gl_Position = projection * vec4(aPos + instancePosition, 0.0, 1.0);
+    vColor = instanceColor;
+}
 )glsl";
 
 const char* fragmentShaderSource = R"glsl(
     #version 330 core
-    out vec4 FragColor;
-    uniform vec4 color;
-    void main() {
-        FragColor = color;
-    }
+out vec4 FragColor;
+
+in vec4 vColor; // Receive color from vertex shader
+
+void main() {
+    FragColor = vColor;
+}
 )glsl";
 
 unsigned int compileShader(unsigned int type, const char* source) {
@@ -100,7 +110,7 @@ void initializeGrid() {
     }
 }
 
-//add ( && grid[gridY - 1][gridX].type == EMPTY to all if statements to stop drawing on preexisting sand)
+//add ( && grid[gridY - 1][gridX].type == EMPTY to all if statements to stop drawing on pre-existing sand)
 
 void placeSand(int mouseX, int mouseY) {
     int gridX = mouseX / CELL_SIZE;
@@ -127,17 +137,17 @@ void randomPlaceSand(int mouseX, int mouseY) {
     int direction = dis(gen);
 
     if (direction == 0) {
-        if (gridY - 1 >= 0) {
+        if (gridY + 2 < GRID_HEIGHT) {
             grid[gridY + 2][gridX] = { SAND, currentColor };
         }
     }
     else if (direction == 1) {
-        if (gridX - 1 >= 0 && gridY - 1 >= 0) {
+        if (gridX - 1 >= 0 && gridY + 1 < GRID_HEIGHT) {
             grid[gridY + 1][gridX - 1] = { SAND, currentColor };
         }
     }
     else if (direction == 2) {
-        if (gridX + 1 < GRID_WIDTH && gridY - 1 >= 0) {
+        if (gridX + 1 < GRID_WIDTH && gridY + 1 < GRID_HEIGHT) {
             grid[gridY + 1][gridX + 1] = { SAND, currentColor };
         }
     }
@@ -166,63 +176,86 @@ void updateSimulation() {
     }
 }
 
-unsigned int VAO = 0, VBO = 0;
+unsigned int VAO = 0, VBO = 0, instanceVBO=0;
+
+struct InstanceData {
+    glm::vec2 position;
+    glm::vec4 color;
+};
 
 void initializeRenderingResources() {
-    if (VAO == 0 && VBO == 0) {
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
+    
+    float vertices[] = {
+        0.0f,      0.0f,
+        CELL_SIZE, 0.0f,
+        CELL_SIZE, CELL_SIZE,
+        0.0f,      CELL_SIZE
+    };
 
-        glBindVertexArray(VAO);
+    unsigned int indices[] = {
+        0, 1, 2, 3
+    };
 
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, nullptr, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        glBindVertexArray(0);
-    }
-}
-
-void renderGrid(unsigned int shaderProgram, unsigned int projectionLoc, unsigned int colorLoc) {
-    glUseProgram(shaderProgram);
-
-    float left = 0.0f;
-    float right = GRID_WIDTH * CELL_SIZE;
-    float bottom = 0.0f;
-    float top = GRID_HEIGHT * CELL_SIZE;
-    glm::mat4 projection = glm::ortho(left, right, bottom, top);
-
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    
 
     glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+
+    //instancevbo data
+    glGenBuffers(1, &instanceVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+
+    //pos
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offsetof(InstanceData, position));
+    glVertexAttribDivisor(1, 1); 
+
+    //col
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offsetof(InstanceData, color));
+    glVertexAttribDivisor(2, 1); 
+
+    glBindVertexArray(0);
+}
+
+void renderGrid(unsigned int shaderProgram, unsigned int projectionLoc) { 
+    glUseProgram(shaderProgram);
+
+    glm::mat4 projection = glm::ortho(0.0f, (float)w, 0.0f, (float)h);
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+    std::vector<InstanceData> instances;
+    instances.reserve(GRID_WIDTH * GRID_HEIGHT / 4);
 
     for (int y = 0; y < GRID_HEIGHT; ++y) {
         for (int x = 0; x < GRID_WIDTH; ++x) {
             if (grid[y][x].type == SAND) {
-                glm::vec4 color = grid[y][x].color;
-
-
-                float vertices[] = {
-                    x * sand,         y * sand,
-                    (x + 1) * sand,   y * sand,
-                    (x + 1) * sand,   (y + 1) * sand,
-                    x * sand,         (y + 1) * sand
-                };
-
-
-                glBindBuffer(GL_ARRAY_BUFFER, VBO);
-                glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-
-                glUniform4f(colorLoc, color.r, color.g, color.b, color.a);
-
-                glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+                
+                instances.push_back({ glm::vec2(x * CELL_SIZE, y * CELL_SIZE), grid[y][x].color });
             }
         }
     }
 
+    if (instances.empty()) {
+        return; 
+    }
+
+    //giving the gpu instance data
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+    glBufferData(GL_ARRAY_BUFFER, instances.size() * sizeof(InstanceData), instances.data(), GL_STREAM_DRAW);
+
+    
+    glBindVertexArray(VAO);
+    glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, instances.size());
     glBindVertexArray(0);
+
     glUseProgram(0);
 }
 
@@ -250,7 +283,7 @@ glm::vec4 rgbToHsv(const glm::vec4& color) {
         h *= 60;
         if (h < 0) h += 360;
     }
-    return glm::vec4(h / 360.0f, s, v, color.a); // normalised h value range 0-1 inclusive
+    return glm::vec4(h / 360.0f, s, v, color.a); // normalised hue value 0 to 1 (inclusive)
 }
 
 glm::vec4 hsvToRgb(const glm::vec4& color) {
@@ -350,8 +383,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         initializeGrid();
     }
 
-    else if (key == GLFW_KEY_P && action == GLFW_RELEASE) { // Use 'P' key to toggle pause
-        isPaused = !isPaused; // Toggle pause state
+    else if (key == GLFW_KEY_P && action == GLFW_RELEASE) { 
+        isPaused = !isPaused; 
     }
 }
 
@@ -409,15 +442,14 @@ int main() {
         ImGui::ColorEdit3("background", (float*)&background_color);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 100.0f / io.Framerate, io.Framerate);
         ImGui::End();
-        
+
         if (leftmousePressed || rightmousePressed) {
             updateColor();
         }
         updateSimulation();
         glClear(GL_COLOR_BUFFER_BIT);
 
-        renderGrid(shaderProgram, projectionLoc, colorLoc);
-
+        renderGrid(shaderProgram, projectionLoc);
         glfwPollEvents();
 
         ImVec2 initialWindowSize(640, 350);
@@ -428,7 +460,7 @@ int main() {
             leftmousePressed = false, rightmousePressed = false;
 
         }
-        
+
         ImGui::Render();
         glClearColor(background_color.x * background_color.w, background_color.y * background_color.w, background_color.z * background_color.w, background_color.w);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
