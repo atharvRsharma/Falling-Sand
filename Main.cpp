@@ -73,7 +73,7 @@ const char* fragmentShaderSource = R"glsl(
     #version 330 core
 out vec4 FragColor;
 
-in vec4 vColor; // Receive color from vertex shader
+in vec4 vColor; 
 
 void main() {
     FragColor = vColor;
